@@ -150,7 +150,7 @@ runtest() {
 
 		 speed_test '25858' '北京' '移动'
 		 speed_test '16171' '福建福州' '移动'
-		 speed_test '41910' '河南郑州５Ｇ' '移动'
+		 # speed_test '41910' '河南郑州５Ｇ' '移动'
 		 speed_test '6715' '浙江杭州５Ｇ' '移动'
 		 speed_test '29105' '陕西西安５Ｇ' '移动'
 
