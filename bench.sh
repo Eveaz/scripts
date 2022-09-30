@@ -73,6 +73,7 @@ speed() {
     speed_test '' 'Speedtest.net'
     speed_test '3633' 'Shanghai, CT'
     speed_test '28946' 'Chongqing, CT'
+    speed_test '27594' 'Guangzhou, CT'
     speed_test '29353' 'Wuhan, CT'
     speed_test '26352' 'Nanjing, CT'
     speed_test '34988' 'Shenyang, CT'
