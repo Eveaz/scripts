@@ -16,7 +16,7 @@ YELLOW='\033[0;33m'
 PLAIN='\033[0m'
 BLUE="\033[36m"
 
-SUPPORT_COUNTRY=(AL DZ AD AO AG AR AM AU AT AZ BS BD BB BE BZ BJ BT BA BW BR BG BF CV CA CL CO KM CR HR CY DK DJ DM DO EC SV EE FJ FI FR GA GM GE DE GH GR GD GT GN GW GY HT HN HU IS IN ID IQ IE IL IT JM JP JO KZ KE KI KW KG LV LB LS LR LI LT LU MG MW MY MV ML MT MH MR MU MX MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG MK NO OM PK PW PA PG PE PH PL PT QA RO RW KN LC VC WS SM ST SN RS SC SL SG SK SI SB ZA ES LK SR SE CH TH TG TO TT TN TR TV UG AE US UY VU ZM BO BN CG CZ VA FM MD PS KR TW TZ TL GB)
+SUPPORT_COUNTRY=(AL DZ AD AO AG AR AM AU AT AZ BS BD BB BE BZ BJ BT BO BA BW BR BN BG BF CV CA CL CO KM CG CR CI HR CY CZ DK DJ DM DO EC SV EE FJ FI FR GA GM GE DE GH GR GD GT GN GW GY HT VA HN HU IS IN ID IQ IE IL IT JM JP JO KZ KE KI KW KG LV LB LS LR LI LT LU MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG MK NO OM PK PW PS PA PG PY PE PH PL PT QA RO RW KN LC VC WS SM ST SN RS SC SL SG SK SI SB ZA KR ES LK SR SE CH TW TZ TH TL TG TO TT TN TR TV UG UA AE GB US UY VU ZM)
 echo -e "${BLUE}OpenAI Access Checker. Made by Vincent${PLAIN}"
 echo -e "${BLUE}https://github.com/missuo/OpenAI-Checker${PLAIN}"
 echo "-------------------------------------"
@@ -26,7 +26,7 @@ then
 else
 	echo -e "[IPv4]"
 	check4=`ping 1.1.1.1 -c 1 2>&1`;
-	if [[ "$check4" != *"received"* ]] && [[ "$check4" != *"transmitted"* ]];then
+	if [[ "$check4" != *"received"* ]] && [[ "$check4" != *"permissions-policy"* ]];then
 		echo -e "\033[34mIPv4 is not supported on the current host. Skip...\033[0m";
 	else
 		# local_ipv4=$(curl -4 -s --max-time 10 api64.ipify.org)
@@ -45,7 +45,7 @@ else
 	echo "-------------------------------------"
 	echo -e "[IPv6]"
 	check6=`ping6 240c::6666 -c 1 2>&1`;
-	if [[ "$check6" != *"received"* ]] && [[ "$check6" != *"transmitted"* ]];then
+	if [[ "$check6" != *"received"* ]] && [[ "$check6" != *"permissions-policy"* ]];then
 		echo -e "\033[34mIPv6 is not supported on the current host. Skip...\033[0m";    
 	else
 		# local_ipv6=$(curl -6 -s --max-time 20 api64.ipify.org)
