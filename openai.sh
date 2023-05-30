@@ -20,7 +20,7 @@ SUPPORT_COUNTRY=(AL DZ AD AO AG AR AM AU AT AZ BS BD BB BE BZ BJ BT BO BA BW BR 
 echo -e "${BLUE}OpenAI Access Checker. Made by Vincent${PLAIN}"
 echo -e "${BLUE}https://github.com/missuo/OpenAI-Checker${PLAIN}"
 echo "-------------------------------------"
-if [[ $(curl -sS https://chat.openai.com/ -I | grep "text/plain") != "" ]]
+if [[ $(curl -sS https://chat.openai.com/ -I | grep "text/plain") != "Sorry, you have been blocked" ]]
 then
 	echo "Your IP is BLOCKED!"
 else
