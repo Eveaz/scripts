@@ -66,18 +66,6 @@ Media_Cookie=$(curl -s --retry 3 --max-time 10 "https://raw.githubusercontent.co
 IATACode=$(curl -s --retry 3 --max-time 10 "https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/reference/IATACode.txt")
 TVer_Cookie="Accept: application/json;pk=BCpkADawqM0_rzsjsYbC1k1wlJLU4HiAtfzjxdUmfvvLUQB-Ax6VA-p-9wOEZbCEm3u95qq2Y1CQQW1K9tPaMma9iAqUqhpISCmyXrgnlpx9soEmoVNuQpiyGsTpePGumWxSs1YoKziYB6Wz"
 
-countRunTimes() {
-    if [ "$is_busybox" == 1 ]; then
-        count_file=$(mktemp)
-    else
-        count_file=$(mktemp --suffix=RRC)
-    fi
-    RunTimes=$(curl -s --max-time 10 "https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fcheck.unclock.media&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=visit&edge_flat=false" >"${count_file}")
-    TodayRunTimes=$(cat "${count_file}" | tail -3 | head -n 1 | awk '{print $5}')
-    TotalRunTimes=$(($(cat "${count_file}" | tail -3 | head -n 1 | awk '{print $7}') + 2527395))
-}
-countRunTimes
-
 checkOS() {
     ifTermux=$(echo $PWD | grep termux)
     ifMacOS=$(uname -a | grep Darwin)
@@ -1054,7 +1042,7 @@ function MediaUnlockTest_YouTube_Premium() {
     fi
     local isNotAvailable=$(echo $tmpresult | grep 'Premium is not available in your country')
     local region=$(echo $tmpresult | grep "countryCode" | sed 's/.*"countryCode"//' | cut -f2 -d'"')
-    local isAvailable=$(echo $tmpresult | grep 'manageSubscriptionButton')
+    local isAvailable=$(echo $tmpresult | grep '/month')
 
     if [ -n "$isNotAvailable" ]; then
         echo -n -e "\r YouTube Premium:\t\t\t${Font_Red}No${Font_Suffix} \n"
@@ -1079,15 +1067,17 @@ function MediaUnlockTest_YouTube_CDN() {
         return
     fi
 
-    local iata=$(echo $tmpresult | grep router | cut -f2 -d'"' | cut -f2 -d"." | sed 's/.\{2\}$//' | tr [:lower:] [:upper:])
-    local checkfailed=$(echo $tmpresult | grep "=>")
-    if [ -z "$iata" ] && [ -n "$checkfailed" ]; then
-        CDN_ISP=$(echo $checkfailed | awk '{print $3}' | cut -f1 -d"-" | tr [:lower:] [:upper:])
-        echo -n -e "\r YouTube CDN:\t\t\t\t${Font_Yellow}Associated with [$CDN_ISP]${Font_Suffix}\n"
-        return
-    elif [ -n "$iata" ]; then
+    local iata=$(echo $tmpresult | grep '=>'| awk "NR==1" | awk '{print $3}' | cut -f2 -d'-' | cut -c 1-3 | tr [:lower:] [:upper:])
+    if [ -n "$iata" ] && [ ${#iata} -eq 3 ]; then
         local lineNo=$(echo "$IATACode" | cut -f3 -d"|" | sed -n "/${iata}/=")
         local location=$(echo "$IATACode" | awk "NR==${lineNo}" | cut -f1 -d"|" | sed -e 's/^[[:space:]]*//')
+    fi
+    local isIDC=$(echo $tmpresult | grep "router")
+    if [ -n "$iata" ] && [ -z "$isIDC" ]; then
+        local CDN_ISP=$(echo $tmpresult | awk "NR==1" | awk '{print $3}' | cut -f1 -d"-" | tr [:lower:] [:upper:])
+        echo -n -e "\r YouTube CDN:\t\t\t\t${Font_Yellow}$CDN_ISP in $location${Font_Suffix}\n"
+        return
+    elif [ -n "$iata" ] && [ -n "$isIDC" ]; then
         echo -n -e "\r YouTube CDN:\t\t\t\t${Font_Green}$location${Font_Suffix}\n"
         return
     else
@@ -3150,14 +3140,66 @@ function MediaUnlockTest_AISPlay() {
 
 function OpenAITest(){
     local result1=$(curl $useNIC $usePROXY $xForward -${1} ${ssll} -sL --max-time 10 "https://chat.openai.com" | grep 'Sorry, you have been blocked')
-    local result2=$(curl $useNIC $usePROXY $xForward -${1} ${ssll} -sI --max-time 10 "https://chat.openai.com" | grep 'cf-mitigated: challenge')
-    if [ -z "$result1" ] && [ -n "$result2" ]; then
+    if [ -z "$result1" ]; then
         echo -n -e "\r ChatGPT:\t\t\t\t${Font_Green}Yes${Font_Suffix}\n"
         return
     else
         echo -n -e "\r ChatGPT:\t\t\t\t${Font_Red}No${Font_Suffix}\n"
         return
     fi
+}
+
+function MediaUnlockTest_K_PLUS(){
+  local token=$(curl $useNIC $usePROXY $xForward -${1} ${ssll} -s --max-time 10 -H "Origin: https://xem.kplus.vn" -H "Referer: https://xem.kplus.vn/" -X POST -d '{"osVersion":"Windows NT 10.0","appVersion":"114.0.0.0","deviceModel":"Chrome","deviceType":"PC","deviceSerial":"w39db81c0-a2e9-11ed-952a-49b91c9e6f09","deviceOem":"Chrome","devicePrettyName":"Chrome","ssoToken":"eyJrZXkiOiJ2c3R2IiwiZW5jIjoiQTEyOENCQy1IUzI1NiIsImFsZyI6ImRpciJ9..MWbBlLuci2KNLl9lvMe63g.IbBX7-dg3BWaXzzoxTQz-pJFulm_Y8axWLuG5DcJxQ9jTUPOhA2e6dzOP2hryAFVPFoIRs97ONGTHEYTFQgUtRlvqvx53jyTi3yegU6zWhJnhYZA2sdaj9khsNvVAth0zcWFoWA9GGwfNE5TZLOwczAexIxqC1Ee-tQDILC4XklFrJfvdzoCQBABRXpD_O4HHHIYFs0jBMtYSyD9Vq7dTD61sAVca_83lav7jvpP17PuAo3HHIFQtUdcugpgkB91mJbABIDTPdo0mqdzbgTA_FilwO1Z5qnpwqIZIXy0bhVXFFcwUZPIUxjLEVzP3SyHceFF5N-v7OeYhYZRLYuBKxWj1cRb3LAa3FGJvefqRsBadlsr0cZnOgx0TsL51a2SaIpNyyGtaq8KTTLULIZBb2Zsq2jmBkZtxjoPxUR8ku7J4sL0tfLDoMlWVZkrX4_1tls3E-l8Ael-wd0kbS1i2vpf-Vdh80lRClpDg3ibSSUFPsp3wYMFsuKfyY8vpHrCfYDJDDbYOSv20sfnU7q7gcmizTCFBuiszmXbFX9_aH8UOaCGeqkYDV1ZZ3mQ26TM7JEquuZTV09wdi81ABoM8RZcb2ua0cuocaO4-asMh8KQWNea9BCYlKK5NSPz--oGgGxSdvxZ63qQz1Lr4QZytA2buoQV5OlMoEP7k87fPcig5rPqsK7aeWUXJSmfiOBbSLztoiamvvHClMpds3frv0ud8NWUUoijmS_JUGfF7XYNxWWqEGJuDUoSllV5MVwtIb5wM069gR7zknrr5aRVDi3Nho16KHQ_iB3vxoIr-ExajWLNlvo44CopGhxhgOAKPkULV356uamZpB7twY_iEVrwGMQA1_hEH4usO-UbzuxL_pssLhJKD4NjVcTe86Z08Bfm0IyiNWESmFkA6FVfsxu57Yfd4bXT8mxnfXXmklb7u7vB0RVYRo4i26QGJbPknybHdfgQWEvRCMoAjEG-E2LymBAMwFneWEpPTwBMpfvlTHnGnUtfViA4Zy1xqF2q95g9AF9nF3sE4YpYuSFSkUQB4sZd8emDApIdP6Avqsq809Gg06_R2sUGrD9SQ-XbXhvtAYMcaUcSv54hJvRcSUkygqU8tdg4tJHR23UBb-I.UfpC5BKhvt8EE5gpIFMQoQ","brand":"vstv","environment":"p","language":"en_US","memberId":"0","featureLevel":4,"provisionData":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYyI6dHJ1ZSwiaWF0IjoxNjg2NTc4NzYyLCJ1cCI6ImNwaSIsImRlIjoiYnJhbmRNYXBwaW5nIiwiYnIiOiJ2c3R2IiwiZHMiOiJ3MzlkYjgxYzAtYTJlOS0xMWVkLTk1MmEtNDliOTFjOWU2ZjA5In0.3mbI7wnJKtRf3493yc_ZEMEvzUXldwDx0sSZdwQnlNk"}' "https://tvapi-sgn.solocoo.tv/v1/session" | python -m json.tool 2>/dev/null | grep '"token"' | awk '{print $2}' | cut -f2 -d'"')
+  local tmpresult=$(curl $useNIC $usePROXY $xForward -${1} ${ssll} -s --max-time 10 -X POST -d '{"player":{"name":"RxPlayer","version":"3.29.0","capabilities":{"mediaTypes":["DASH","DASH"],"drmSystems":["PlayReady","Widevine"],"smartLib":true}}}' -H "Content-Type: application/json" -H "Authorization: Bearer $token" "https://tvapi-sgn.solocoo.tv/v1/assets/BJO0h8jMwJWg5Id_4VLxIJ-VscUzRry_myp4aC21/play")
+  local result=$(echo $tmpresult | grep geoblock)
+  if [ -n "$tmpresult" ] && [ -z "$result" ]; then
+    echo -n -e "\r K+:\t\t\t\t\t${Font_Green}Yes${Font_Suffix}\n"
+    return
+  elif [ -n "$result" ]; then
+    echo -n -e "\r K+:\t\t\t\t\t${Font_Red}No${Font_Suffix}\n"
+    return
+  elif [ -z "$tmpresult" ] && [[ "$1" == "6" ]]; then
+    echo -n -e "\r K+:\t\t\t\t\t${Font_Red}IPv6 Not Supported${Font_Suffix}\n"
+    return
+  else
+    echo -n -e "\r K+:\t\t\t\t\t${Font_Red}Failed${Font_Suffix}\n"
+    return
+  fi
+
+}
+
+function MediaUnlockTest_TV360(){
+  local tmpresult=$(curl -s $useNIC $usePROXY $xForward -${1} ${ssll} --max-time 10 "http://api-v2.tv360.vn/public/v1/composite/get-link?childId=998335&device_type=WEB_IPHONE&id=19474&network_device_id=prIUMaumjI7dNWKSUxFkEViFygs%3D&t=1686572228&type=film" -H "User-Agent: TV360/31 CFNetwork/1402.0.8 Darwin/22.2.0" -H "userid: 182551343" -H "devicetype: WEB_IPHONE" -H "deviceName: iPad Air 5th Gen (WiFi)" -H "profileid: 182733455" -H "s: cSkV/vwUfX6tahDwe6xh9Bl0yhNs/TdWTaOJiWDt3gHekijGnNYh9i4YaUmdfBfI4oKOwvioKJ7PuKMH7ctWA6rEHeGXH/nUYOY1g7l4Umh6zoed5bBwWCgUuh5eMqdNNoptwaeCee58USTteOkbHQ==" -H "deviceid: 69FFABD6-F9D8-4C2E-8C44-7195CF0A2930" -H "devicedrmid: prIUMaumjI7dNWKSUxFkEViFygs=" -H "Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxODI1NTEzNDMiLCJ1c2VySWQiOjE4MjU1MTM0MywicHJvZmlsZUlkIjoxODI3MzM0NTUsImR2aSI6MjY5NDY3MTUzLCJjb250ZW50RmlsdGVyIjoiMTAwIiwiZ25hbWUiOiIiLCJpYXQiOjE2ODY1NzIyMDEsImV4cCI6MTY4NzE3NzAwMX0.oi0BKvATgBzPEkqR_liBrvMKXBUiWzp2BQme-biDnwiVhuta0qn_aZo6z3azLdjW5kH6PfEwEkc4K9jCfAK5rw" -H "osappversion: 1.9.27" -H "sessionid: C5017358-5327-4185-999A-CA3291CC66AC" -H "zoneid: 1" -H "Accept: application/json, text/html" -H "Content-Type: application/json" -H "osapptype: IPAD" -H "tv360transid: 1686572228_69FFABD6-F9D8-4C2E-8C44-7195CF0A2930")
+  local result=$(echo $tmpresult | python -m json.tool 2>/dev/null | grep errorCode | awk '{print $2}' |cut -f1 -d',')
+  if [[ "$result" == "200" ]]; then
+    echo -n -e "\r TV360:\t\t\t\t\t${Font_Green}Yes${Font_Suffix}\n"
+    return
+  elif [[ "$result" == "310" ]]; then
+    echo -n -e "\r TV360:\t\t\t\t\t${Font_Red}No${Font_Suffix}\n"
+    return
+  elif [ -z "$tmpresult" ] && [[ "$1" == "6" ]]; then
+    echo -n -e "\r TV360:\t\t\t\t\t${Font_Red}IPv6 Not Supported${Font_Suffix}\n"
+    return
+  fi
+}
+
+function MediaUnlockTest_MeWatch(){
+  local tmpresult=$(curl -s $useNIC $usePROXY $xForward -${1} ${ssll} --max-time 10 https://cdn.mewatch.sg/api/items/97098/videos?delivery=stream%2Cprogressive&ff=idp%2Cldp%2Crpt%2Ccd&lang=en&resolution=External&segments=all)
+  local checkfail=$(echo $tmpresult | python -m json.tool 2>/dev/null | grep 8002)
+  if [ -n "$tmpresult" ] && [ -z "$checkfail" ]; then
+    echo -n -e "\r MeWatch:\t\t\t\t${Font_Green}Yes${Font_Suffix}\n"
+    return
+  elif [ -n "$checkfail" ]; then
+    echo -n -e "\r MeWatch:\t\t\t\t${Font_Red}No${Font_Suffix}\n"
+    return
+  elif [ -z "$tmpresult" ] && [[ "$1" == "6" ]]; then
+    echo -n -e "\r MeWatch:\t\t\t\t${Font_Red}IPv6 Not Supported${Font_Suffix}\n"
+    return
+  else
+    echo -n -e "\r MeWatch:\t\t\t\t${Font_Red}Failed${Font_Suffix}\n"
+    return
+  fi
 }
 
 function echo_Result() {
@@ -3491,28 +3533,39 @@ function SEA_UnlockTest(){
     wait
     local array=("HBO GO Asia:" "B-Global SouthEastAsia:") 
     echo_Result ${result} ${array}
-    # ShowRegion SG
+
+    ShowRegion SG
+    local result=$(
+    MediaUnlockTest_MeWatch ${1} &
+    )
+    wait
+    local array=("MeWatch:") 
+    echo_Result ${result} ${array}
+  
     ShowRegion TH
     local result=$(
     MediaUnlockTest_AISPlay ${1} &
     MediaUnblockTest_BGlobalTH ${1} &
     )
     wait
-    local array=("AIS Play" "B-Global Thailand Only") 
+    local array=("AIS Play:" "B-Global Thailand Only:") 
     echo_Result ${result} ${array}
+    
     ShowRegion ID
     local result=$(
     MediaUnblockTest_BGlobalID ${1} &
     )
     wait
-    local array=("B-Global Indonesia Only") 
+    local array=("B-Global Indonesia Only:") 
     echo_Result ${result} ${array}
     ShowRegion VN
     local result=$(
+    MediaUnlockTest_K_PLUS ${1} &
+    MediaUnlockTest_TV360 ${1} &
     MediaUnblockTest_BGlobalVN ${1} &
     )
     wait
-    local array=("B-Global Việt Nam Only") 
+    local array=("K+:" "TV360:" "B-Global Việt Nam Only:") 
     echo_Result ${result} ${array}
     echo "======================================="
 }
@@ -3689,19 +3742,11 @@ function Goodbye() {
     if [[ "$language" == "e" ]]; then
         echo -e "${Font_Green}Testing Done! Thanks for Using This Script! ${Font_Suffix}"
         echo -e ""
-        echo -e "${Font_Yellow}Number of Script Runs for Today: ${TodayRunTimes}; Total Number of Script Runs: ${TotalRunTimes} ${Font_Suffix}"
-        echo -e ""
         echo -e "========================================================="
-        echo -e "${Font_Red}If you found this script helpful, you can but me a coffee${Font_Suffix}"
-        echo -e ""
-        echo -e "LTC: LQD4S6Y5bu3bHX6hx8ASsGHVfaqFGFNTbx"
-        echo -e "========================================================="
+
     else
         echo -e "${Font_Green}本次测试已结束，感谢使用此脚本 ${Font_Suffix}"
         echo -e ""
-        echo -e "${Font_Yellow}检测脚本当天运行次数: ${TodayRunTimes}; 共计运行次数: ${TotalRunTimes} ${Font_Suffix}"
-        echo -e ""
-        #bash <(curl -s https://raw.githubusercontent.com/lmc999/RegionRestrictionCheck/main/reference/AD/AD${ADN})
     fi
 }
 
@@ -3712,6 +3757,7 @@ function ScriptTitle() {
         echo -e " [Stream Platform & Game Region Restriction Test]"
         echo ""
         echo -e "${Font_Green}Github Repository:${Font_Suffix} ${Font_Yellow} https://github.com/lmc999/RegionRestrictionCheck ${Font_Suffix}"
+        echo -e "${Font_Green}Telegram Discussion Group:${Font_Suffix} ${Font_Yellow} https://t.me/gameaccelerate ${Font_Suffix}"
         echo -e "${Font_Purple}Supporting OS: CentOS 6+, Ubuntu 14.04+, Debian 8+, MacOS, Android (Termux), iOS (iSH)${Font_Suffix}"
         echo ""
         echo -e " ** Test Starts At: $(date)"
@@ -3720,6 +3766,7 @@ function ScriptTitle() {
         echo -e " [流媒体平台及游戏区域限制测试]"
         echo ""
         echo -e "${Font_Green}项目地址${Font_Suffix} ${Font_Yellow}https://github.com/lmc999/RegionRestrictionCheck ${Font_Suffix}"
+        echo -e "${Font_Green}BUG反馈或使用交流可加TG群组${Font_Suffix} ${Font_Yellow}https://t.me/gameaccelerate ${Font_Suffix}"
         echo -e "${Font_Purple}脚本适配OS: CentOS 6+, Ubuntu 14.04+, Debian 8+, MacOS, Android (Termux), iOS (iSH)${Font_Suffix}"
         echo ""
         echo -e " ** 测试时间: $(date)"
@@ -3922,7 +3969,7 @@ function RunScript() {
                 Global_UnlockTest 6
             fi
             Goodbye
-	    
+
         else
             echo -e "${Font_Red}请重新执行脚本并输入正确号码${Font_Suffix}"
             echo -e "${Font_Red}Please Re-run the Script with Correct Number Input${Font_Suffix}"
