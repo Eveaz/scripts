@@ -93,6 +93,7 @@ speed() {
     speed_test '36646' 'Zhengzhou 5G, CU'
     speed_test '45170' 'Wuxi, CU'
     speed_test '24447' 'Shanghai 5G, CU'
+    speed_test '27154' 'Tianjin 5G, CU'
     speed_test '37235' 'Shenyang, CU'
     speed_test '54432' 'Sanya, CU'
     speed_test '26404' 'Hefei 5G, CM'
@@ -105,7 +106,7 @@ speed() {
     speed_test '4575' 'Chengdu, CM'
     speed_test '16145' 'Lanzhou, CM'
     speed_test '25858' 'Beijing, CM'
-
+    speed_test '60794' 'Guangzhou 5G, CM'
 }
 
 io_test() {
