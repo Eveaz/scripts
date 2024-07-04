@@ -75,18 +75,45 @@ speed_test() {
 
 speed() {
     speed_test '' 'Speedtest.net'
-    speed_test '21541' 'Los Angeles, US'
-    speed_test '43860' 'Dallas, US'
-    speed_test '40879' 'Montreal, CA'
-    speed_test '24215' 'Paris, FR'
-    speed_test '28922' 'Amsterdam, NL'
-    speed_test '24447' 'Shanghai, CN'
-    speed_test '5530' 'Chongqing, CN'
-    speed_test '60572' 'Guangzhou, CN'
-    speed_test '32155' 'Hongkong, CN'
-    speed_test '23647' 'Mumbai, IN'
-    speed_test '13623' 'Singapore, SG'
-    speed_test '21569' 'Tokyo, JP'
+    speed_test '23844' 'Wuhan, CT'
+    speed_test '29353' 'Wuhan 5G, CT'
+    speed_test '28225' 'Changsha 5G, CT'
+    speed_test '17145' 'Hefei 5G, CT'
+    speed_test '26352' 'Nanjing 5G, CT'
+    speed_test '36663' 'Zhenjiang 5G, CT'
+    speed_test '5317' 'Yangzhou 5G, CT'
+    speed_test '5396' 'Suzhou 5G, CT'
+    speed_test '3633' 'Shanghai, CT'
+    speed_test '28946' 'Chongqing 5G, CT'
+    speed_test '27594' 'Guangzhou 5G, CT'
+    speed_test '34115' 'Tianjin 5G, CT'
+    speed_test '35722' 'Tianjin, CT'
+    speed_test '29071' 'Chengdu, CT'
+    speed_test '3973' 'Lanzhou, CT'
+    speed_test '34988' 'Shenyang 5G, CT'
+    speed_test '59387' 'Ningbo, CT'
+    speed_test '59386' 'Hangzhou, CT'
+    speed_test '4870' 'Changsha 5G, CU'
+    speed_test '36646' 'Zhengzhou 5G, CU'
+    speed_test '45170' 'Wuxi, CU'
+    speed_test '24447' 'Shanghai 5G, CU'
+    speed_test '27154' 'Tianjin 5G, CU'
+    speed_test '37235' 'Shenyang, CU'
+    speed_test '54432' 'Sanya, CU'
+    speed_test '64314' 'Chengdu, CU'
+    speed_test '43752' 'Beijing, CU'
+    speed_test '64638' 'Mianyang, CU'
+    speed_test '26404' 'Hefei 5G, CM'
+    speed_test '41910' 'Zhengzhou 5G, CM'
+    speed_test '54312' 'Hangzhou 5G, CM'
+    speed_test '44176' 'Zhengzhou 5G, CM'
+    speed_test '6715' 'Hangzhou 5G, CM'
+    speed_test '29105' 'Xian 5G, CM'
+    speed_test '16171' 'Fuzhou, CM'
+    speed_test '4575' 'Chengdu, CM'
+    speed_test '16145' 'Lanzhou, CM'
+    speed_test '25858' 'Beijing, CM'
+    speed_test '60794' 'Guangzhou 5G, CM'
 }
 
 io_test() {
@@ -337,14 +364,14 @@ print_system_info() {
         echo " CPU Cache          : $(_blue "$ccache")"
     fi
     if [ -n "$cpu_aes" ]; then
-        echo " AES-NI             : $(_green "\xe2\x9c\x93 Enabled")"
+        echo " AES-NI             : $(_green "Enabled")"
     else
-        echo " AES-NI             : $(_red "\xe2\x9c\x97 Disabled")"
+        echo " AES-NI             : $(_red "Disabled")"
     fi
     if [ -n "$cpu_virt" ]; then
-        echo " VM-x/AMD-V         : $(_green "\xe2\x9c\x93 Enabled")"
+        echo " VM-x/AMD-V         : $(_green "Enabled")"
     else
-        echo " VM-x/AMD-V         : $(_red "\xe2\x9c\x97 Disabled")"
+        echo " VM-x/AMD-V         : $(_red "Disabled")"
     fi
     echo " Total Disk         : $(_yellow "$disk_total_size") $(_blue "($disk_used_size Used)")"
     echo " Total Mem          : $(_yellow "$tram") $(_blue "($uram Used)")"
@@ -413,8 +440,8 @@ ipv6_check=$( (ping -6 -c 1 -W 4 ipv6.google.com >/dev/null 2>&1 && echo true) |
 if [[ -z "$ipv4_check" && -z "$ipv6_check" ]]; then
     _yellow "Warning: Both IPv4 and IPv6 connectivity were not detected.\n"
 fi
-[[ -z "$ipv4_check" ]] && online="$(_red "\xe2\x9c\x97 Offline")" || online="$(_green "\xe2\x9c\x93 Online")"
-[[ -z "$ipv6_check" ]] && online+=" / $(_red "\xe2\x9c\x97 Offline")" || online+=" / $(_green "\xe2\x9c\x93 Online")"
+[[ -z "$ipv4_check" ]] && online="$(_red "Offline")" || online="$(_green "Online")"
+[[ -z "$ipv6_check" ]] && online+=" / $(_red "Offline")" || online+=" / $(_green "Online")"
 start_time=$(date +%s)
 get_system_info
 check_virt
