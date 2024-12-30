@@ -114,6 +114,7 @@ speed() {
     speed_test '44176' 'CM, Zhengzhou 5G'
     speed_test '6715' 'CM, Hangzhou 5G'
     speed_test '29105' 'CM, Xian 5G'
+    speed_test '17634' 'CM, Fuzhou'
     speed_test '16171' 'CM, Fuzhou'
     speed_test '4575' 'CM, Chengdu'
     speed_test '16145' 'CM, Lanzhou'
