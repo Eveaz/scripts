@@ -75,7 +75,7 @@ delete_rule() {
         rule_num=$(echo "$UFW_STATUS" | grep "$ip" | grep -oP '(?<=\[)\d+(?=\])' | head -1)
         if [[ -n "$rule_num" ]]; then
             echo "[删除] 规则 [$rule_num]: $ip ${comment:+（$comment）}"
-            yes | ufw delete "$rule_num"
+            ufw --force delete "$rule_num"
             UFW_STATUS=$(ufw status numbered)   # 更新缓存
         else
             break
