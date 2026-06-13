@@ -54,7 +54,7 @@ echo ""
 
 get_insert_position() {
     local last_deny
-    last_deny=$(echo "$UFW_STATUS" | grep "DENY IN" | grep -oP '(?<=\[)\d+(?=\])' | tail -1)
+    last_deny=$(echo "$UFW_STATUS" | grep "DENY IN" | grep -oP '(?<=\[)\s*\d+(?=\])' | tr -d ' ' | tail -1)
     if [[ -n "$last_deny" ]]; then
         echo $(( last_deny + 1 ))
     else
@@ -72,7 +72,7 @@ delete_rule() {
 
     # 循环删除（可能存在多条重复规则）
     while echo "$UFW_STATUS" | grep -q "$ip"; do
-        rule_num=$(echo "$UFW_STATUS" | grep "$ip" | grep -oP '(?<=\[)\d+(?=\])' | head -1)
+        rule_num=$(echo "$UFW_STATUS" | grep "$ip" | grep -oP '(?<=\[)\s*\d+(?=\])' | tr -d ' ' | head -1)
         if [[ -n "$rule_num" ]]; then
             echo "[删除] 规则 [$rule_num]: $ip ${comment:+（$comment）}"
             ufw --force delete "$rule_num"
