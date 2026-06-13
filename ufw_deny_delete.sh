@@ -13,7 +13,7 @@ fi
 # 获取所有 DENY IN 规则
 # ============================================================
 
-UFW_STATUS=$(ufw status numbered)
+UFW_STATUS=$(ufw status numbered </dev/null)
 
 DENY_COUNT=$(echo "$UFW_STATUS" | grep "DENY IN" | wc -l)
 
@@ -27,7 +27,7 @@ echo "$UFW_STATUS" | grep "DENY IN"
 echo ""
 
 # ============================================================
-# 二次确认（强制从终端读取，兼容 curl | bash 执行方式）
+# 二次确认（强制从终端读取，兼容 curl 执行方式）
 # ============================================================
 
 read -rp "确认删除以上全部 $DENY_COUNT 条 DENY IN 规则？(yes/no): " CONFIRM < /dev/tty
@@ -41,14 +41,16 @@ echo "=== 开始删除 DENY IN 规则 ==="
 echo ""
 
 # ============================================================
-# 循环删除（--force 跳过确认，不依赖 stdin）
+# 循环删除
 # ============================================================
 
 DONE=0
 FAIL=0
 
 while true; do
-    UFW_STATUS=$(ufw status numbered)
+    # 每次刷新时都明确隔离 stdin
+    UFW_STATUS=$(ufw status numbered </dev/null)
+
     rule_num=$(echo "$UFW_STATUS" | grep "DENY IN" | grep -oP '(?<=\[)\d+(?=\])' | head -1)
 
     [[ -z "$rule_num" ]] && break
@@ -56,7 +58,7 @@ while true; do
     rule_info=$(echo "$UFW_STATUS" | grep "DENY IN" | head -1 | sed 's/^[ \t]*//')
     echo "[删除] $rule_info"
 
-    if ufw --force delete "$rule_num" > /dev/null 2>&1; then
+    if ufw --force delete "$rule_num" </dev/null > /dev/null 2>&1; then
         (( DONE++ ))
     else
         echo "[错误] 删除规则 [$rule_num] 失败"
@@ -74,4 +76,4 @@ echo "=== 执行完毕 ==="
 echo "成功删除：$DONE 条 | 失败：$FAIL 条"
 echo ""
 echo "=== 当前规则 ==="
-ufw status numbered
+ufw status numbered </dev/null
