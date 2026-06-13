@@ -4,8 +4,8 @@
 # 配置区域
 # ============================================================
 
-IP_FILE_URL="https://raw.githubusercontent.com/Eveaz/scripts/main/block_ips.txt"
-TMP_FILE="/tmp/block_ips.txt"
+IP_FILE_URL="https://raw.githubusercontent.com/Eveaz/scripts/main/ufw_block_ips.txt"
+TMP_FILE="/tmp/ufw_block_ips.txt"
 
 # ============================================================
 # 检查权限
