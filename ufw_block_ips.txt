@@ -19,3 +19,7 @@ add|199.45.154.0/24|Censys扫描
 add|199.45.155.0/24|Censys扫描
 add|206.168.34.0/24|Censys扫描
 add|206.168.35.0/24|Censys扫描
+add|49.13.0.0/16|Hetzner Online GmbH
+add|77.83.39.0/24|KPROHOST LLC
+add|45.144.212.0/24|KPROHOST LLC
+add|130.12.181.0/24|VPS Dedicated LLC
