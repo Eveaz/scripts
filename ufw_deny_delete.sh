@@ -10,12 +10,21 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # ============================================================
-# 获取所有 DENY IN 规则
+# 检查 ufw 运行状态并获取规则
 # ============================================================
 
 UFW_STATUS=$(ufw status numbered)
 
-DENY_COUNT=$(echo "$UFW_STATUS" | grep "DENY IN" | wc -l)
+if ! echo "$UFW_STATUS" | grep -q "Status: active"; then
+    echo "错误：UFW 未启用，请先执行 ufw enable"
+    exit 1
+fi
+
+# ============================================================
+# 获取所有 DENY IN 规则
+# ============================================================
+
+DENY_COUNT=$(echo "$UFW_STATUS" | grep "DENY IN" | wc -l | tr -d ' ')
 
 if [[ $DENY_COUNT -eq 0 ]]; then
     echo "当前没有任何 DENY IN 规则，无需操作"
@@ -50,7 +59,6 @@ FAIL=0
 while true; do
     UFW_STATUS=$(ufw status numbered)
 
-    # 修正正则：允许 [ 和数字之间有空格，tr -d 去掉空格
     rule_num=$(echo "$UFW_STATUS" | grep "DENY IN" | grep -oP '(?<=\[)\s*\d+(?=\])' | tr -d ' ' | head -1)
 
     [[ -z "$rule_num" ]] && break
@@ -58,13 +66,16 @@ while true; do
     rule_info=$(echo "$UFW_STATUS" | grep "DENY IN" | head -1 | sed 's/^[ \t]*//')
     echo "[删除] $rule_info"
 
-    if ufw --force delete "$rule_num" > /dev/null 2>&1; then
+    ERR=$(ufw --force delete "$rule_num" 2>&1)
+    EXIT_CODE=$?
+    if [[ $EXIT_CODE -eq 0 ]]; then
         (( DONE++ ))
     else
-        echo "[错误] 删除规则 [$rule_num] 失败"
+        echo "[错误] 删除规则 [$rule_num] 失败：$ERR"
         (( FAIL++ ))
         break
     fi
+
 done
 
 # ============================================================
@@ -77,3 +88,4 @@ echo "成功删除：$DONE 条 | 失败：$FAIL 条"
 echo ""
 echo "=== 当前规则 ==="
 ufw status numbered
+echo ""
