@@ -8,7 +8,7 @@ IP_FILE_URL="https://raw.githubusercontent.com/Eveaz/scripts/main/ufw_block_ips.
 TMP_FILE="/tmp/ufw_block_ips.txt"
 
 # 任何情况退出都自动清理临时文件
-trap 'rm -f "$TMP_FILE"' EXIT
+trap 'rm -f "$TMP_FILE" && echo "临时文件已清理：$TMP_FILE"' EXIT
 
 # ============================================================
 # 检查权限
@@ -47,6 +47,20 @@ ADD_COUNT=$(grep '^add|' "$TMP_FILE" 2>/dev/null | wc -l)
 DEL_COUNT=$(grep '^del|' "$TMP_FILE" 2>/dev/null | wc -l)
 echo "下载成功：待添加 $ADD_COUNT 条，待删除 $DEL_COUNT 条"
 echo ""
+
+# ============================================================
+# 函数：获取新规则应插入的位置（最后一条 DENY IN 规则的下一位）
+# ============================================================
+
+get_insert_position() {
+    local last_deny
+    last_deny=$(echo "$UFW_STATUS" | grep "DENY IN" | grep -oP '(?<=\[)\d+(?=\])' | tail -1)
+    if [[ -n "$last_deny" ]]; then
+        echo $(( last_deny + 1 ))
+    else
+        echo 1
+    fi
+}
 
 # ============================================================
 # 函数：删除指定 IP 的屏蔽规则
@@ -106,7 +120,7 @@ else
     done
 fi
 
-# --- 第二步：反向插入所有添加操作 ---
+# --- 第二步：正向追加所有添加操作 ---
 echo ""
 echo "=== 第二步：处理添加规则 ==="
 echo ""
@@ -114,13 +128,12 @@ echo ""
 ADD_DONE=0
 ADD_SKIP=0
 
-# 过滤出 add 条目
 mapfile -t ADD_IPS < <(grep '^add|' "$TMP_FILE")
 
 if [[ $ADD_COUNT -eq 0 ]]; then
     echo "无需添加的规则，跳过"
 else
-    for (( i=${#ADD_IPS[@]}-1; i>=0; i-- )); do
+    for (( i=0; i<${#ADD_IPS[@]}; i++ )); do
         line="${ADD_IPS[$i]}"
         ip=$(echo "$line" | cut -d'|' -f2 | tr -d ' ')
         comment=$(echo "$line" | cut -d'|' -f3)
@@ -131,8 +144,9 @@ else
             echo "[跳过] 已存在: $ip ${comment:+（$comment）}"
             (( ADD_SKIP++ ))
         else
-            echo "[添加] $ip ${comment:+（$comment）}"
-            ufw insert 1 deny from "$ip" to any
+            INSERT_POS=$(get_insert_position)
+            echo "[添加] 插入位置 [$INSERT_POS]: $ip ${comment:+（$comment）}"
+            ufw insert "$INSERT_POS" deny from "$ip" to any
             UFW_STATUS=$(ufw status numbered)   # 更新缓存
             (( ADD_DONE++ ))
         fi
