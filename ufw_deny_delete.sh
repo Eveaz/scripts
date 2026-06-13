@@ -41,7 +41,7 @@ echo "=== 开始删除 DENY IN 规则 ==="
 echo ""
 
 # ============================================================
-# 循环删除（每次取编号最小的那条，删完自动重新编号）
+# 循环删除（--force 跳过确认，不依赖 stdin）
 # ============================================================
 
 DONE=0
@@ -56,7 +56,7 @@ while true; do
     rule_info=$(echo "$UFW_STATUS" | grep "DENY IN" | head -1 | sed 's/^[ \t]*//')
     echo "[删除] $rule_info"
 
-    if yes | ufw delete "$rule_num" > /dev/null 2>&1; then
+    if ufw --force delete "$rule_num" > /dev/null 2>&1; then
         (( DONE++ ))
     else
         echo "[错误] 删除规则 [$rule_num] 失败"
