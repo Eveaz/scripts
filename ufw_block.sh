@@ -7,6 +7,9 @@
 IP_FILE_URL="https://raw.githubusercontent.com/Eveaz/scripts/main/ufw_block_ips.txt"
 TMP_FILE="/tmp/ufw_block_ips.txt"
 
+# 任何情况退出都自动清理临时文件
+trap 'rm -f "$TMP_FILE"' EXIT
+
 # ============================================================
 # 检查权限
 # ============================================================
@@ -26,20 +29,22 @@ echo ""
 
 if command -v curl &> /dev/null; then
     curl -fsSL "$IP_FILE_URL" -o "$TMP_FILE"
+    DOWNLOAD_STATUS=$?
 elif command -v wget &> /dev/null; then
     wget -q "$IP_FILE_URL" -O "$TMP_FILE"
+    DOWNLOAD_STATUS=$?
 else
     echo "错误：系统未安装 curl 或 wget"
     exit 1
 fi
 
-if [[ $? -ne 0 || ! -s "$TMP_FILE" ]]; then
+if [[ $DOWNLOAD_STATUS -ne 0 || ! -s "$TMP_FILE" ]]; then
     echo "错误：下载失败，请检查 URL 或网络连接"
     exit 1
 fi
 
-ADD_COUNT=$(grep -c '^add|' "$TMP_FILE" 2>/dev/null || echo 0)
-DEL_COUNT=$(grep -c '^del|' "$TMP_FILE" 2>/dev/null || echo 0)
+ADD_COUNT=$(grep '^add|' "$TMP_FILE" 2>/dev/null | wc -l)
+DEL_COUNT=$(grep '^del|' "$TMP_FILE" 2>/dev/null | wc -l)
 echo "下载成功：待添加 $ADD_COUNT 条，待删除 $DEL_COUNT 条"
 echo ""
 
@@ -51,19 +56,13 @@ delete_rule() {
     local ip="$1"
     local comment="$2"
 
-    # 检查规则是否存在
-    if ! ufw status | grep -q "$ip"; then
-        echo "[跳过] 规则不存在: $ip ${comment:+（$comment）}"
-        return
-    fi
-
     # 循环删除（可能存在多条重复规则）
-    while ufw status numbered | grep -q "$ip"; do
-        # 获取该 IP 规则的编号（取第一个）
-        rule_num=$(ufw status numbered | grep "$ip" | grep -oP '(?<=\[)\d+(?=\])' | head -1)
+    while echo "$UFW_STATUS" | grep -q "$ip"; do
+        rule_num=$(echo "$UFW_STATUS" | grep "$ip" | grep -oP '(?<=\[)\d+(?=\])' | head -1)
         if [[ -n "$rule_num" ]]; then
             echo "[删除] 规则 [$rule_num]: $ip ${comment:+（$comment）}"
             yes | ufw delete "$rule_num"
+            UFW_STATUS=$(ufw status numbered)   # 更新缓存
         else
             break
         fi
@@ -76,6 +75,9 @@ delete_rule() {
 
 mapfile -t LINES < <(grep -v '^\s*$\|^\s*#' "$TMP_FILE")
 
+# 缓存 ufw status，避免重复调用
+UFW_STATUS=$(ufw status numbered)
+
 # --- 第一步：先处理所有删除操作 ---
 echo "=== 第一步：处理删除规则 ==="
 echo ""
@@ -83,24 +85,26 @@ echo ""
 DEL_DONE=0
 DEL_SKIP=0
 
-for line in "${LINES[@]}"; do
-    status=$(echo "$line" | cut -d'|' -f1 | tr -d ' ')
-    ip=$(echo "$line" | cut -d'|' -f2 | tr -d ' ')
-    comment=$(echo "$line" | cut -d'|' -f3)
+if [[ $DEL_COUNT -eq 0 ]]; then
+    echo "无需删除的规则，跳过"
+else
+    for line in "${LINES[@]}"; do
+        status=$(echo "$line" | cut -d'|' -f1 | tr -d ' ')
+        ip=$(echo "$line" | cut -d'|' -f2 | tr -d ' ')
+        comment=$(echo "$line" | cut -d'|' -f3)
 
-    [[ "$status" != "del" ]] && continue
-    [[ -z "$ip" ]] && continue
+        [[ "$status" != "del" ]] && continue
+        [[ -z "$ip" ]] && continue
 
-    if ufw status | grep -q "$ip"; then
-        delete_rule "$ip" "$comment"
-        (( DEL_DONE++ ))
-    else
-        echo "[跳过] 规则不存在: $ip ${comment:+（$comment）}"
-        (( DEL_SKIP++ ))
-    fi
-done
-
-[[ $DEL_COUNT -eq 0 ]] && echo "无需删除的规则"
+        if echo "$UFW_STATUS" | grep -q "$ip"; then
+            delete_rule "$ip" "$comment"
+            (( DEL_DONE++ ))
+        else
+            echo "[跳过] 规则不存在: $ip ${comment:+（$comment）}"
+            (( DEL_SKIP++ ))
+        fi
+    done
+fi
 
 # --- 第二步：反向插入所有添加操作 ---
 echo ""
@@ -113,30 +117,27 @@ ADD_SKIP=0
 # 过滤出 add 条目
 mapfile -t ADD_IPS < <(grep '^add|' "$TMP_FILE")
 
-for (( i=${#ADD_IPS[@]}-1; i>=0; i-- )); do
-    line="${ADD_IPS[$i]}"
-    ip=$(echo "$line" | cut -d'|' -f2 | tr -d ' ')
-    comment=$(echo "$line" | cut -d'|' -f3)
+if [[ $ADD_COUNT -eq 0 ]]; then
+    echo "无需添加的规则，跳过"
+else
+    for (( i=${#ADD_IPS[@]}-1; i>=0; i-- )); do
+        line="${ADD_IPS[$i]}"
+        ip=$(echo "$line" | cut -d'|' -f2 | tr -d ' ')
+        comment=$(echo "$line" | cut -d'|' -f3)
 
-    [[ -z "$ip" ]] && continue
+        [[ -z "$ip" ]] && continue
 
-    if ufw status | grep -q "$ip"; then
-        echo "[跳过] 已存在: $ip ${comment:+（$comment）}"
-        (( ADD_SKIP++ ))
-    else
-        echo "[添加] $ip ${comment:+（$comment）}"
-        ufw insert 1 deny from "$ip" to any
-        (( ADD_DONE++ ))
-    fi
-done
-
-[[ ${#ADD_IPS[@]} -eq 0 ]] && echo "无需添加的规则"
-
-# ============================================================
-# 清理临时文件
-# ============================================================
-
-rm -f "$TMP_FILE"
+        if echo "$UFW_STATUS" | grep -q "$ip"; then
+            echo "[跳过] 已存在: $ip ${comment:+（$comment）}"
+            (( ADD_SKIP++ ))
+        else
+            echo "[添加] $ip ${comment:+（$comment）}"
+            ufw insert 1 deny from "$ip" to any
+            UFW_STATUS=$(ufw status numbered)   # 更新缓存
+            (( ADD_DONE++ ))
+        fi
+    done
+fi
 
 # ============================================================
 # 输出汇总
