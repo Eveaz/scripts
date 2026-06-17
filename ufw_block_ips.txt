@@ -1,26 +1,24 @@
-# 格式：状态|IP段|备注
-# 状态：add=添加屏蔽，del=删除屏蔽
-# add|1.2.3.0/24|扫描器
-# del|4.5.6.0/24|误封已解除
+# 格式：IP段|备注
+# 1.2.3.0/24|扫描器
 
-add|66.132.159.0/24|Censys扫描
-add|66.132.148.0/24|Censys扫描
-add|66.132.153.0/24|Censys扫描
-add|66.132.224.0/24|Censys扫描
-add|66.132.186.0/24|Censys扫描
-add|66.132.195.0/24|Censys扫描
-add|66.132.172.0/24|Censys扫描
-add|162.142.125.0/24|Censys扫描
-add|167.94.138.0/24|Censys扫描
-add|167.94.145.0/24|Censys扫描
-add|167.94.146.0/24|Censys扫描
-add|167.248.133.0/24|Censys扫描
-add|199.45.154.0/24|Censys扫描
-add|199.45.155.0/24|Censys扫描
-add|206.168.34.0/24|Censys扫描
-add|206.168.35.0/24|Censys扫描
-add|103.219.249.0/24|PT Ikubaru Indonesia
-add|49.13.0.0/16|Hetzner Online GmbH
-add|77.83.39.0/24|KPROHOST LLC
-add|45.144.212.0/24|KPROHOST LLC
-add|130.12.181.0/24|VPS Dedicated LLC
+66.132.159.0/24|Censys扫描
+66.132.148.0/24|Censys扫描
+66.132.153.0/24|Censys扫描
+66.132.224.0/24|Censys扫描
+66.132.186.0/24|Censys扫描
+66.132.195.0/24|Censys扫描
+66.132.172.0/24|Censys扫描
+162.142.125.0/24|Censys扫描
+167.94.138.0/24|Censys扫描
+167.94.145.0/24|Censys扫描
+167.94.146.0/24|Censys扫描
+167.248.133.0/24|Censys扫描
+199.45.154.0/24|Censys扫描
+199.45.155.0/24|Censys扫描
+206.168.34.0/24|Censys扫描
+206.168.35.0/24|Censys扫描
+103.219.249.0/24|PT Ikubaru Indonesia
+49.13.0.0/16|Hetzner Online GmbH
+77.83.39.0/24|KPROHOST LLC
+45.144.212.0/24|KPROHOST LLC
+130.12.181.0/24|VPS Dedicated LLC
