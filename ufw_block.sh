@@ -118,20 +118,20 @@ echo ""
 
 CLEAR_DONE=0
 CLEAR_FAIL=0
+CLEAR_TOTAL=${#CURRENT_ORDER[@]}
 
 while true; do
     UFW_STATUS=$(ufw status numbered)
     rule_num=$(echo "$UFW_STATUS" | grep "DENY IN" | grep -oP '(?<=\[)\s*\d+(?=\])' | tr -d ' ' | head -1)
     [[ -z "$rule_num" ]] && break
 
-    rule_info=$(echo "$UFW_STATUS" | grep "DENY IN" | head -1 | sed 's/^[[:space:]]*//')
-    echo "[清除] $rule_info"
+    rule_ip=$(echo "$UFW_STATUS" | grep "DENY IN" | grep -oP '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}' | head -1)
+    (( CLEAR_DONE++ ))
+    echo "[清除 $CLEAR_DONE/$CLEAR_TOTAL] $rule_ip"
 
     ERR=$(ufw --force delete "$rule_num" 2>&1)
     EXIT_CODE=$?
-    if [[ $EXIT_CODE -eq 0 ]]; then
-        (( CLEAR_DONE++ ))
-    else
+    if [[ $EXIT_CODE -ne 0 ]]; then
         echo "[错误] 清除失败：$ERR"
         echo "清除阶段出错，中止操作，请手动检查 ufw 规则"
         (( CLEAR_FAIL++ ))
@@ -146,15 +146,18 @@ echo ""
 
 ADD_DONE=0
 ADD_FAIL=0
+ADD_TOTAL=${#ADD_IPS[@]}
 
-for (( i=${#ADD_IPS[@]}-1; i>=0; i-- )); do
+for (( i=ADD_TOTAL-1; i>=0; i-- )); do
     line="${ADD_IPS[$i]}"
     ip=$(echo "$line" | cut -d'|' -f1 | tr -d '[[:space:]]')
     comment=$(echo "$line" | cut -d'|' -f2 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
     [[ -z "$ip" ]] && continue
 
-    echo "[添加] $ip ${comment:+（$comment）}"
+    DISPLAY_NUM=$(( ADD_TOTAL - i ))
+    echo "[添加 $DISPLAY_NUM/$ADD_TOTAL] $ip ${comment:+（$comment）}"
+
     ERR=$(ufw insert 1 deny from "$ip" to any 2>&1)
     EXIT_CODE=$?
     if [[ $EXIT_CODE -eq 0 ]]; then
