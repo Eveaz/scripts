@@ -14,6 +14,10 @@ TXT_URL="https://raw.githubusercontent.com/Eveaz/scripts/main/ufw_block_ips.txt"
 TMP_DIR=""
 TMP_FILE=""
 
+SEP_WIDTH=80
+STATUS_COL=72
+TARGET_COL_WIDTH=32
+
 # -----------------------------
 # 颜色与日志
 # -----------------------------
@@ -36,7 +40,12 @@ else
 fi
 
 print_line() {
-    printf '%b\n' "${C_CYAN}────────────────────────────────────────────────────────────${C_RESET}"
+    local i
+    printf '%b' "${C_CYAN}"
+    for ((i = 0; i < SEP_WIDTH; i++)); do
+        printf '─'
+    done
+    printf '%b\n' "${C_RESET}"
 }
 
 log_info() {
@@ -79,6 +88,45 @@ trim() {
 
 ufw_cmd() {
     LANG=C ufw "$@"
+}
+
+short_text() {
+    local text="$1"
+    local max_len="$2"
+
+    if (( ${#text} > max_len )); then
+        printf '%s...' "${text:0:$((max_len - 3))}"
+    else
+        printf '%s' "$text"
+    fi
+}
+
+progress_print() {
+    local current="$1"
+    local total="$2"
+    local action="$3"
+    local target="$4"
+    local status="$5"
+
+    local width
+    local target_show
+
+    width="${#total}"
+    target_show="$(short_text "$target" "$TARGET_COL_WIDTH")"
+
+    printf '  [%0*d/%0*d] %-16s %-32s' \
+        "$width" "$current" \
+        "$width" "$total" \
+        "$action" \
+        "$target_show"
+
+    if [[ -t 1 ]]; then
+        printf '\033[%sG' "$STATUS_COL"
+    else
+        printf ' '
+    fi
+
+    printf '%b\n' "$status"
 }
 
 # -----------------------------
@@ -144,13 +192,9 @@ parse_txt() {
     while IFS= read -r line || [[ -n "$line" ]]; do
         line_no=$((line_no + 1))
 
-        # 去除 Windows 换行符
         line="${line//$'\r'/}"
-
-        # 去除首尾空白
         line="$(trim "$line")"
 
-        # 跳过空行和注释行
         [[ -z "$line" ]] && continue
         [[ "$line" =~ ^# ]] && continue
 
@@ -186,13 +230,13 @@ check_duplicates() {
     title "检查重复 IP"
 
     local seen_file="$TMP_DIR/seen.txt"
-    : > "$seen_file"
-
     local ip
     local duplicate_found=0
 
+    : > "$seen_file"
+
     for ip in "${WANT_IPS[@]}"; do
-        if grep -Fxq "$ip" "$seen_file"; then
+        if grep -Fxq -- "$ip" "$seen_file"; then
             log_error "发现重复 IP 规则：$ip"
             duplicate_found=1
         else
@@ -221,13 +265,10 @@ validate_rules() {
     for ((i = 0; i < total; i++)); do
         ip="${WANT_IPS[$i]}"
 
-        printf '  [%0*d/%0*d] 检查 %-40s' \
-            "${#total}" "$((i + 1))" "${#total}" "$total" "$ip"
-
         if ufw_cmd --dry-run deny from "$ip" >/dev/null 2>&1; then
-            printf '%b\n' " ${C_GREEN}OK${C_RESET}"
+            progress_print "$((i + 1))" "$total" "检查规则" "$ip" "${C_GREEN}OK${C_RESET}"
         else
-            printf '%b\n' " ${C_RED}失败${C_RESET}"
+            progress_print "$((i + 1))" "$total" "检查规则" "$ip" "${C_RED}失败${C_RESET}"
             log_error "UFW 无法识别该 IP/IP段：$ip"
             exit 1
         fi
@@ -254,11 +295,11 @@ load_existing_deny_rules() {
         # 示例：
         # [ 1] Anywhere                   DENY IN     1.2.3.4
         # [12] Anywhere                   DENY IN     1.2.3.0/24
+        # [ 1] Anywhere                   DENY IN     1.2.3.4 # comment
         if [[ "$line" =~ ^\[\ *([0-9]+)\].*[[:space:]]DENY[[:space:]]+IN[[:space:]]+(.+)$ ]]; then
             num="${BASH_REMATCH[1]}"
             src="${BASH_REMATCH[2]}"
 
-            # 如果 ufw 显示 comment，这里去掉 comment 部分
             src="${src%%#*}"
             src="$(trim "$src")"
 
@@ -329,13 +370,10 @@ delete_existing_deny_rules() {
         num="${EXIST_RULE_NUMS[$idx]}"
         ip="${EXIST_IPS[$idx]}"
 
-        printf '  [%0*d/%0*d] 删除规则 #%-4s %-40s' \
-            "${#total}" "$progress" "${#total}" "$total" "$num" "$ip"
-
         if ufw_cmd --force delete "$num" >/dev/null 2>&1; then
-            printf '%b\n' " ${C_GREEN}OK${C_RESET}"
+            progress_print "$progress" "$total" "删除规则 #$num" "$ip" "${C_GREEN}OK${C_RESET}"
         else
-            printf '%b\n' " ${C_RED}失败${C_RESET}"
+            progress_print "$progress" "$total" "删除规则 #$num" "$ip" "${C_RED}失败${C_RESET}"
             log_error "删除 UFW 规则失败，规则编号：$num，IP：$ip"
             exit 1
         fi
@@ -368,17 +406,13 @@ add_new_deny_rules() {
             ufw_comment="ufw_block"
         fi
 
-        # ufw comment 长度不宜过长
         ufw_comment="${ufw_comment:0:240}"
-
-        printf '  [%0*d/%0*d] 添加 deny from %-40s' \
-            "${#total}" "$pos" "${#total}" "$total" "$ip"
 
         # 使用 insert 保证最终规则顺序与 TXT 顺序一致
         if ufw_cmd --force insert "$pos" deny from "$ip" comment "$ufw_comment" >/dev/null 2>&1; then
-            printf '%b\n' " ${C_GREEN}OK${C_RESET}"
+            progress_print "$pos" "$total" "添加 deny from" "$ip" "${C_GREEN}OK${C_RESET}"
         else
-            printf '%b\n' " ${C_RED}失败${C_RESET}"
+            progress_print "$pos" "$total" "添加 deny from" "$ip" "${C_RED}失败${C_RESET}"
             log_error "添加 UFW deny 规则失败：$ip"
             exit 1
         fi
