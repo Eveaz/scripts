@@ -70,10 +70,10 @@ for line in "${ADD_IPS[@]}"; do
 done
 
 # ============================================================
-# 提取当前 ufw 里 DENY IN 的 IP 顺序
+# 提取当前 ufw 里 DENY IN 的 IP 顺序（精确匹配 CIDR 格式）
 # ============================================================
 
-mapfile -t CURRENT_ORDER < <(echo "$UFW_STATUS" | grep "DENY IN" | grep -oP '[\d./]+' | grep '/')
+mapfile -t CURRENT_ORDER < <(echo "$UFW_STATUS" | grep "DENY IN" | grep -oP '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}')
 
 # ============================================================
 # 对比顺序是否一致
@@ -133,8 +133,9 @@ while true; do
         (( CLEAR_DONE++ ))
     else
         echo "[错误] 清除失败：$ERR"
+        echo "清除阶段出错，中止操作，请手动检查 ufw 规则"
         (( CLEAR_FAIL++ ))
-        break
+        exit 1
     fi
 done
 
