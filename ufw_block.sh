@@ -148,22 +148,31 @@ ADD_DONE=0
 ADD_FAIL=0
 ADD_TOTAL=${#ADD_IPS[@]}
 
-for (( i=ADD_TOTAL-1; i>=0; i-- )); do
+# 先正向打印所有待添加条目
+for (( i=0; i<ADD_TOTAL; i++ )); do
     line="${ADD_IPS[$i]}"
     ip=$(echo "$line" | cut -d'|' -f1 | tr -d '[[:space:]]')
     comment=$(echo "$line" | cut -d'|' -f2 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    [[ -z "$ip" ]] && continue
+    echo "[添加 $(( i+1 ))/$ADD_TOTAL] $ip ${comment:+（$comment）}"
+done
+
+echo ""
+
+# 再反向插入保证顺序正确
+for (( i=ADD_TOTAL-1; i>=0; i-- )); do
+    line="${ADD_IPS[$i]}"
+    ip=$(echo "$line" | cut -d'|' -f1 | tr -d '[[:space:]]')
 
     [[ -z "$ip" ]] && continue
-
-    DISPLAY_NUM=$(( ADD_TOTAL - i ))
-    echo "[添加 $DISPLAY_NUM/$ADD_TOTAL] $ip ${comment:+（$comment）}"
 
     ERR=$(ufw insert 1 deny from "$ip" to any 2>&1)
     EXIT_CODE=$?
     if [[ $EXIT_CODE -eq 0 ]]; then
         (( ADD_DONE++ ))
     else
-        echo "[错误] 添加失败：$ip，原因：$ERR"
+        comment=$(echo "$line" | cut -d'|' -f2 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        echo "[错误] 添加失败：$ip ${comment:+（$comment）}，原因：$ERR"
         (( ADD_FAIL++ ))
     fi
 done
