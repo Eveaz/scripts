@@ -25,7 +25,7 @@ set -Eeuo pipefail
 # ==============================================================================
 
 # GitHub raw txt 规则文件地址，请修改为你自己的地址。
-RULE_URL="${RULE_URL:-https://raw.githubusercontent.com/你的用户名/你的仓库/main/ufw-block.txt}"
+RULE_URL="${RULE_URL:-https://raw.githubusercontent.com/Eveaz/scripts/main/ufw_block_ips.txt}"
 
 # UFW 规则备注前缀，用于标记这些规则由本脚本管理。
 COMMENT_PREFIX="${COMMENT_PREFIX:-github-block}"
