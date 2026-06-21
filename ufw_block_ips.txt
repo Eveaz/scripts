@@ -24,3 +24,6 @@
 130.12.181.0/24|VPS Dedicated LLC
 220.88.0.0/14|Korea Telecom
 41.82.32.0/19|SONATEL
+178.230.0.0/16|Odido Netherlands B.V.
+213.209.159.0/24|Feo Prest SRL
+112.216.0.0/13|LG DACOM Corporation
