@@ -27,3 +27,4 @@
 178.230.0.0/16|Odido Netherlands B.V.
 213.209.159.0/24|Feo Prest SRL
 112.216.0.0/13|LG DACOM Corporation
+103.154.230.0/23|PT Digital Media Telematika
