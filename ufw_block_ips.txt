@@ -31,3 +31,4 @@
 45.156.87.0/24|TechTies Inc
 176.65.139.0/24|Offshore LC
 178.175.167.0/24|STUDIO AN-TV SRL
+38.22.170.0/24|Fiberwifi SA de CV
