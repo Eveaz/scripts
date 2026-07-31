@@ -33,6 +33,8 @@
 45.144.212.0/24|KPROHOST LLC
 77.83.39.0/24|KPROHOST LLC
 112.216.0.0/13|LG DACOM Corporation
+20.192.0.0/10|Microsoft Corporation
+172.208.0.0/13|Microsoft Corporation
 191.232.0.0/13|Microsoft Corporation
 176.65.139.0/24|Offshore LC
 178.230.0.0/16|Odido Netherlands B.V.
