@@ -22,6 +22,7 @@
 115.190.184.0/21|Beijing Volcano Engine
 73.200.0.0/15|Comcast
 13.140.128.0/18|Contabo GmbH
+173.249.30.0/23|Contabo GmbH
 45.84.88.0/24|CGI GLOBAL LIMITED
 213.209.159.0/24|Feo Prest SRL
 38.22.170.0/24|Fiberwifi SA de CV
@@ -37,6 +38,7 @@
 20.192.0.0/10|Microsoft Corporation
 172.208.0.0/13|Microsoft Corporation
 191.232.0.0/13|Microsoft Corporation
+93.102.0.0/16|NOS COMUNICACOES, S.A.
 176.65.139.0/24|Offshore LC
 178.230.0.0/16|Odido Netherlands B.V.
 150.66.0.0/16|OPTAGE Inc
