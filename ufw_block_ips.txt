@@ -17,6 +17,7 @@
 199.45.155.0/24|Censys
 206.168.34.0/24|Censys
 206.168.35.0/24|Censys
+47.245.128.0/17|Alibaba
 47.251.0.0/16|Alibaba
 180.76.192.0/22|Beijing Baidu Netcom
 115.190.184.0/21|Beijing Volcano Engine
