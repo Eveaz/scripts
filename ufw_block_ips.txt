@@ -22,6 +22,7 @@
 47.238.0.0/15|Alibaba
 180.76.192.0/22|Beijing Baidu Netcom
 115.190.184.0/21|Beijing Volcano Engine
+101.99.8.0/21|CMC Telecom
 73.200.0.0/15|Comcast
 13.140.128.0/18|Contabo GmbH
 173.249.30.0/23|Contabo GmbH
@@ -50,6 +51,7 @@
 178.230.0.0/16|Odido Netherlands B.V.
 150.66.0.0/16|OPTAGE Inc
 45.15.224.0/22|PRIMANET SRL
+187.121.224.0/21|PRONTO FIBRA LTDA
 103.154.230.0/23|PT Digital Media Telematika
 103.219.249.0/24|PT Ikubaru Indonesia
 162.252.52.0/22|PureVoltage Hosting Inc
