@@ -77,6 +77,7 @@
 163.5.210.0/24|Virtuo Holdings Inc
 148.252.128.0/19|Vodafone Limited
 130.12.181.0/24|VPS Dedicated LLC
+102.220.160.0/22|VPS Dedicated LLC
 156.227.235.0/24|YISU CLOUD LTD
 195.63.0.0/20|3xK Tech GmbH
 217.181.64.0/20|3xK Tech GmbH
